@@ -1,0 +1,91 @@
+# -*- ii: flux; -*-
+#+TITLE: flux customize
+#+PROPERTY: header-args:tmate+  :session flux
+#+PROPERTY: header-args:tmate+  :window deploy
+#+PROPERTY: header-args:shell+  :var FLUX_FORWARD_NAMESPACE="flux" 
+#+PROPERTY: header-args:shell+  :prologue "export FLUX_FORWARD_NAMESPACE" 
+* run flux
+** Install
+  #+begin_src tmate
+    export GHUSER=hh
+    export GHMAIL=hh@ii.coop
+    export FLUX_FORWARD_NAMESPACE=flux
+    kubectl create ns flux
+    fluxctl install \
+            --namespace=${FLUX_FORWARD_NAMESPACE} \
+            --git-email=${GHMAIL} \
+            --manifest-generation=true \
+            --git-path staging \
+            --git-url=git@github.com:${GHUSER}/flux-kustomize-example \
+        | kubectl apply -f -
+  #+end_src
+** deployment status
+  #+begin_src shell
+    kubectl -n ${FLUX_FORWARD_NAMESPACE} rollout status deployment/flux
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  deployment "flux" successfully rolled out
+  #+end_example
+** fluxctl identity
+Add the following as a rw deploy key to your fork
+
+[[https://github.com/YOURUSER/flux-kustomize-example/settings/keys/new]]
+
+  #+begin_src shell
+    fluxctl identity
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCruA8zRrY8KRDFK25lytzD9XQFmH0f3q1iKwGHxYFXQ8nhWQ+zdjZ6ptqcNRw0+A0B4Y3l4uKV6P4oICDhKfdRu6lI4mrRQ31wry3ZO9OOfJZoipgk5oncu9g/a7h/hv2vh0g265X91Krmq4JdYHqjxAnYbYM0ST01/2RuJJhLDT68KNZxPE63glDoS4wrl9BFwj1x/uCWnRG7jS5MtZh//g0FviA6CvTaLAmRrtUALmUJh/GGwHuWLy52xbPWPyXpYnrczE1dtCY4rvOM2JGGXruMLe/lgX1K+Bo2a2DOW1EhsR5Fk5lPisfLbpZU3nK2EIc8LFcZhjMtrkqmYSN5O/UmUWXN+tYnUiWzdcjwwqxFH9NlxutjwZmZMSTPO72Dz3EosoeVP7z5pdfQbMSwsyDt/29tB9oFWI+qITHZiL+wXJb9QaTPzeVPNyrmd4Sy39kyKGDUTEdEO2558/ppw4G6QVo+/6w6rmBIDOORKnFHXte+uaxDUfY870LsWeM= root@flux-6d766dffd7-85rmx
+  #+end_example
+** commit / sync
+
+Pulls happen every 5 minutes by defaul OR you can run ~fluxctl sync~
+
+  #+begin_src shell
+    fluxctl sync && echo SYNCED
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  SYNCED
+  #+end_example
+
+** fluxctl list-images
+Add the following as a rw deploy key to your fork
+
+  #+begin_src shell
+    fluxctl list-workloads
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  WORKLOAD  CONTAINER  IMAGE  RELEASE  POLICY
+  #+end_example
+
+* Footnotes
+** flux install arguments
+  #+begin_example
+    --namespace string          cluster namespace where to install flux
+    --git-email string          email to use as git committer
+    --git-path strings          relative paths within the Git repo for Flux to locate Kubernetes manifests
+    --manifest-generation       whether to enable manifest generation
+    --git-url string            URL of the Git repository to be used by Flux
+                                    e.g. git@github.com:<your username>/flux-get-started
+    --add-security-context      Ensure security context information is added to the pod specs.
+                                   Defaults to 'true' (default true)
+    --git-branch string         Git branch to be used by Flux
+                                   (default "master")
+    --git-label string          Git label to keep track of Flux's sync progress;
+                                    overrides both --git-sync-tag and --git-notes-ref
+                                    (default "flux")
+    --git-user string           username to use as git committer
+                                    (default "Flux")
+    --registry-disable-scanning do not scan container image registries to fill in the registry cache
+    --git-readonly              tell flux it has readonly access to the repo
+    --help                      help for install
+    --output-dir string         a directory in which to write individual manifests, rather than printing to stdout
+  #+end_example
